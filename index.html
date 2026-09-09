@@ -157,6 +157,7 @@
       gap: 8px;
       transition: all 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
       box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+      text-decoration: none;
     }
     .btn-launch-screen:hover {
       background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
@@ -826,9 +827,9 @@
         <span class="status-led" id="screen-led"></span>
         <span id="screen-status-text">STAGE: SEARCHING...</span>
       </div>
-      <button class="btn-launch-screen" onclick="controller.openStageScreen()" title="在新窗口中打开独立的纯净大屏幕舞台渲染端">
+      <a href="screen.html" target="_blank" class="btn-launch-screen" onclick="controller.openStageScreen(event)" title="在新窗口中打开独立的纯净大屏幕舞台渲染端">
         ⛶ 打开独立舞台大屏 (STAGE SCREEN)
-      </button>
+      </a>
       <button class="btn-action" onclick="controller.toggleShortcutModal(true)" title="查看所有键盘快捷键矩阵">
         ⌨️ 快捷键速查 (?)
       </button>
@@ -1237,25 +1238,31 @@
         }
       }
 
-      async openStageScreen() {
-        // 1. 如果在 Tauri 桌面应用环境中，调用原生 Rust 窗口管理器
-        if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
-          try {
-            await window.__TAURI__.core.invoke('open_stage_window');
-            setTimeout(() => this.broadcastAll(), 400);
-            return;
-          } catch (err) {
-            console.warn('Tauri native window call fallback to standard window.open', err);
+      openStageScreen(event) {
+        // 1. 如果在 Tauri 桌面原生应用环境中
+        if (window.__TAURI__ && window.__TAURI__.core && typeof window.__TAURI__.core.invoke === 'function') {
+          if (event) {
+            event.preventDefault();
+            event.stopPropagation();
           }
+          window.__TAURI__.core.invoke('open_stage_window')
+            .then(() => {
+              this.showHudToast('🖥️ 原生舞台大屏已唤起');
+              setTimeout(() => this.broadcastAll(), 300);
+            })
+            .catch((err) => {
+              console.warn('Tauri open_stage_window failed, fallback to web window:', err);
+              window.open('screen.html', '_blank');
+            });
+          return false;
         }
 
-        // 2. 浏览器 Web / Docker 运行环境
-        const screenUrl = 'screen.html';
-        const strWindowFeatures = "menubar=no,location=no,resizable=yes,scrollbars=no,status=no";
-        this.stageWindow = window.open(screenUrl, 'StrobeStageDisplay', strWindowFeatures);
+        // 2. 浏览器 Web / Docker 运行环境：原生超链接点击由浏览器新窗口打开
+        this.showHudToast('🖥️ 舞台大屏已打开');
         setTimeout(() => {
           this.broadcastAll();
         }, 500);
+        return true;
       }
 
       broadcastAll() {

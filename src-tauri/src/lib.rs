@@ -3,13 +3,15 @@
 fn open_stage_window(app: tauri::AppHandle) -> Result<(), String> {
     use tauri::Manager;
     
-    // 如果窗口已存在则聚焦
+    // 1. 如果窗口已存在（例如配置中预载的 stage 窗口或已创建的窗口），直接显示并获得焦点
     if let Some(win) = app.get_webview_window("stage") {
+        win.show().map_err(|e| e.to_string())?;
+        win.unminimize().map_err(|e| e.to_string())?;
         win.set_focus().map_err(|e| e.to_string())?;
         return Ok(());
     }
 
-    // 动态创建独立的舞台大屏渲染窗口
+    // 2. 如果窗口曾被用户手动关闭销毁，则动态重新构建
     let stage_window = tauri::WebviewWindowBuilder::new(
         &app,
         "stage",
@@ -18,10 +20,12 @@ fn open_stage_window(app: tauri::AppHandle) -> Result<(), String> {
     .title("STAGE DISPLAY - MODULAR PLUGIN ENGINE")
     .inner_size(1920.0, 1080.0)
     .min_inner_size(800.0, 600.0)
+    .resizable(true)
     .fullscreen(false)
     .build()
     .map_err(|e| e.to_string())?;
 
+    stage_window.show().map_err(|e| e.to_string())?;
     stage_window.set_focus().map_err(|e| e.to_string())?;
     Ok(())
 }
