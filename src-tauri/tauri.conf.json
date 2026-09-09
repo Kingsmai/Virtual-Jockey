@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "VJ Modular Strobe Engine",
+  "version": "1.0.0",
+  "identifier": "com.vjmodular.strobe",
+  "build": {
+    "beforeDevCommand": "npm run start:dev",
+    "devUrl": "http://localhost:20023",
+    "beforeBuildCommand": "",
+    "frontendDist": "../"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "VJ MASTER CONSOLE - MODULAR PLUGIN MATRIX",
+        "url": "index.html",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 980,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.svg"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
+  }
+}

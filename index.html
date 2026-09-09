@@ -1237,7 +1237,19 @@
         }
       }
 
-      openStageScreen() {
+      async openStageScreen() {
+        // 1. 如果在 Tauri 桌面应用环境中，调用原生 Rust 窗口管理器
+        if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+          try {
+            await window.__TAURI__.core.invoke('open_stage_window');
+            setTimeout(() => this.broadcastAll(), 400);
+            return;
+          } catch (err) {
+            console.warn('Tauri native window call fallback to standard window.open', err);
+          }
+        }
+
+        // 2. 浏览器 Web / Docker 运行环境
         const screenUrl = 'screen.html';
         const strWindowFeatures = "menubar=no,location=no,resizable=yes,scrollbars=no,status=no";
         this.stageWindow = window.open(screenUrl, 'StrobeStageDisplay', strWindowFeatures);

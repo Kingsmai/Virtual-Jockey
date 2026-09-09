@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 20023;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -66,7 +66,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n🎛️ VJ Modular Strobe Server running at:`);
-  console.log(`   > Local:   http://localhost:${PORT}/`);
-  console.log(`   > Stage:   http://localhost:${PORT}/screen.html\n`);
+  console.log(`\n🎛️ VJ Modular Strobe Engine Server is live:`);
+  console.log(`   > Web Console (VJ 控台):  http://localhost:${PORT}/`);
+  console.log(`   > Stage Screen (舞台大屏): http://localhost:${PORT}/screen.html\n`);
 });

@@ -1,15 +1,30 @@
 {
   "name": "vj-modular-strobe-engine",
   "version": "1.0.0",
-  "description": "Modular VJ Strobe & Visual Matrix Engine with 26 Plugins x 104 Variants",
+  "description": "Modular VJ Strobe & Visual Matrix Engine with 26 Plugins x 104 Variants (Tauri Desktop App & Docker WebApp dual-mode)",
   "type": "module",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start:dev": "node server.js",
     "dev": "node server.js",
-    "test": "node test-plugins.js"
+    "test": "node test-plugins.js",
+    "tauri": "tauri",
+    "app:dev": "tauri dev",
+    "app:build": "tauri build",
+    "docker:build": "docker build -t vj-modular-strobe .",
+    "docker:run": "docker run -d -p 20023:20023 --name vj-app vj-modular-strobe",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
   },
   "keywords": [
     "vj",
+    "tauri",
+    "docker",
     "canvas",
     "strobe",
     "visuals",

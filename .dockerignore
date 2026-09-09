@@ -1,0 +1,11 @@
+.git
+.gitignore
+node_modules
+npm-debug.log
+src-tauri/target
+src-tauri/gen
+dist
+*.md
+.DS_Store
+*.exe
+*.msi
