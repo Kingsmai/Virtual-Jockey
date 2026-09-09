@@ -1,0 +1,22 @@
+{
+  "name": "vj-modular-strobe-engine",
+  "version": "1.0.0",
+  "description": "Modular VJ Strobe & Visual Matrix Engine with 26 Plugins x 104 Variants",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node test-plugins.js"
+  },
+  "keywords": [
+    "vj",
+    "canvas",
+    "strobe",
+    "visuals",
+    "audio-visual",
+    "webgl",
+    "plugins"
+  ],
+  "author": "",
+  "license": "MIT"
+}

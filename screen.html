@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STAGE DISPLAY - MODULAR PLUGIN ENGINE (大屏幕端)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      cursor: none; /* 大屏幕端自动隐藏鼠标 */
+    }
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      display: block;
+    }
+    /* 悬停唤醒控制台跳转小按钮（鼠标移动到左上角时微现） */
+    .top-launcher {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s;
+      display: flex;
+      gap: 10px;
+    }
+    body:hover .top-launcher {
+      opacity: 0.85;
+      cursor: default;
+    }
+    .launch-btn {
+      background: rgba(15, 20, 30, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.5);
+      color: #00f0ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 6px 14px;
+      border-radius: 16px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      text-decoration: none;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+    }
+    .launch-btn:hover {
+      background: #00f0ff;
+      color: #000;
+    }
+
+    /* 极简无干扰连接与快捷键反馈通知 */
+    .sync-toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      z-index: 10;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #00ffcc;
+      background: rgba(10, 15, 25, 0.88);
+      border: 1px solid rgba(0, 255, 204, 0.4);
+      padding: 8px 20px;
+      border-radius: 20px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+      box-shadow: 0 0 25px rgba(0, 255, 204, 0.35);
+      backdrop-filter: blur(8px);
+    }
+    .sync-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-launcher">
+    <a href="index.html" target="_blank" class="launch-btn">🎛️ 打开 VJ 控制台 (CONSOLE)</a>
+    <button class="launch-btn" onclick="stageEngine.toggleFullscreen()">⛶ 全屏显示 (F11)</button>
+  </div>
+
+  <div class="sync-toast" id="toast">● VJ MODULAR PLUGIN ENGINE • STAGE ACTIVE</div>
+  <canvas id="canvas"></canvas>
+
+  <script type="module">
+    import { plugins, pluginList, utils } from './plugins/index.js';
+
+    /**
+     * 大屏幕模块化插件 60FPS 渲染管线 + 全面快捷键支持与双向广播总线
+     */
+    class ModularStageEngine {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d', { alpha: false });
+        this.width = 0;
+        this.height = 0;
+        this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        // 核心同步状态
+        this.speed = 1.0;
+        this.globalVariant = 0;
+        this.blackout = false;
+        this.accumulatedTime = 0;
+        this.lastFocusedKey = 'D';
+
+        // 26 个插件层状态管理
+        this.layers = {};
+        for (let i = 65; i <= 90; i++) {
+          const char = String.fromCharCode(i);
+          this.layers[char] = {
+            active: false,
+            intensity: 0.0,
+            variantIdx: 0 // 0~3
+          };
+        }
+
+        // 默认激活 D + M
+        if (this.layers['D']) this.layers['D'].active = true;
+        if (this.layers['M']) this.layers['M'].active = true;
+
+        this.lastTime = performance.now();
+        this.toastEl = document.getElementById('toast');
+        this.tapTimes = [];
+
+        // 双向通信广播通道
+        this.channel = new BroadcastChannel('disco_dual_screen_bus');
+        this.setupComms();
+
+        this.bindEvents();
+        this.resize();
+
+        // 启动主渲染循环
+        this.loop = this.loop.bind(this);
+        requestAnimationFrame(this.loop);
+
+        // 握手通知
+        this.showToast('● 26 PLUGINS READY • FULL SHORTCUTS ENABLED');
+        this.sendHeartbeat();
+        setInterval(() => this.sendHeartbeat(), 1000);
+      }
+
+      setupComms() {
+        this.channel.onmessage = (event) => {
+          const msg = event.data;
+          if (!msg || !msg.type) return;
+
+          switch (msg.type) {
+            case 'SYNC_STATE':
+              if (msg.layers) {
+                for (const k in msg.layers) {
+                  if (this.layers[k]) {
+                    if (typeof msg.layers[k] === 'boolean') {
+                      this.layers[k].active = msg.layers[k];
+                    } else if (typeof msg.layers[k] === 'object') {
+                      if (msg.layers[k].active !== undefined) this.layers[k].active = msg.layers[k].active;
+                      if (msg.layers[k].variantIdx !== undefined) this.layers[k].variantIdx = msg.layers[k].variantIdx;
+                    }
+                  }
+                }
+              }
+              if (msg.speed !== undefined) this.speed = msg.speed;
+              if (msg.variantIdx !== undefined) this.globalVariant = msg.variantIdx;
+              if (msg.globalVariant !== undefined) this.globalVariant = msg.globalVariant;
+              if (msg.blackout !== undefined) this.blackout = msg.blackout;
+              break;
+
+            case 'TOGGLE_LAYER':
+              if (this.layers[msg.key]) {
+                this.layers[msg.key].active = msg.active !== undefined ? msg.active : !this.layers[msg.key].active;
+              }
+              break;
+
+            case 'SET_PLUGIN_VARIANT':
+              if (this.layers[msg.key]) {
+                this.layers[msg.key].variantIdx = msg.variantIdx;
+              }
+              break;
+
+            case 'SET_SPEED':
+              this.speed = msg.speed;
+              break;
+
+            case 'SET_VARIANT':
+              this.globalVariant = msg.variantIdx !== undefined ? msg.variantIdx : msg.globalVariant;
+              break;
+
+            case 'BLACKOUT':
+              this.blackout = msg.active;
+              break;
+
+            case 'FLASH_BURST':
+              if (this.layers[msg.key]) {
+                this.layers[msg.key].intensity = 1.0;
+              }
+              break;
+
+            case 'PING_CONSOLE':
+              this.sendHeartbeat();
+              this.showToast('● VJ CONSOLE SYNCED');
+              break;
+          }
+        };
+      }
+
+      sendHeartbeat() {
+        const layerStates = {};
+        for (const k in this.layers) {
+          layerStates[k] = {
+            active: this.layers[k].active,
+            variantIdx: this.layers[k].variantIdx
+          };
+        }
+        this.channel.postMessage({
+          type: 'SCREEN_HEARTBEAT',
+          speed: this.speed,
+          globalVariant: this.globalVariant,
+          variantIdx: this.globalVariant,
+          layers: layerStates,
+          activeCount: Object.keys(this.layers).filter(k => this.layers[k].active).length
+        });
+      }
+
+      showToast(text) {
+        if (!this.toastEl) return;
+        this.toastEl.innerText = text;
+        this.toastEl.classList.add('show');
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => {
+          this.toastEl.classList.remove('show');
+        }, 1800);
+      }
+
+      toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+
+      broadcastState() {
+        const stateLayers = {};
+        for (const k in this.layers) {
+          stateLayers[k] = {
+            active: this.layers[k].active,
+            variantIdx: this.layers[k].variantIdx
+          };
+        }
+        this.channel.postMessage({
+          type: 'SYNC_STATE',
+          layers: stateLayers,
+          speed: this.speed,
+          globalVariant: this.globalVariant,
+          variantIdx: this.globalVariant,
+          blackout: this.blackout
+        });
+      }
+
+      loadCue(pluginConfigs, globalVariant, speed) {
+        for (const k in this.layers) {
+          this.layers[k].active = false;
+        }
+        pluginConfigs.forEach(item => {
+          const key = item[0];
+          const vIdx = item[1] || 0;
+          if (this.layers[key]) {
+            this.layers[key].active = true;
+            this.layers[key].variantIdx = vIdx;
+          }
+        });
+        this.globalVariant = globalVariant;
+        this.speed = speed;
+        this.blackout = false;
+        this.broadcastState();
+        this.showToast(`● CUE: ${pluginConfigs.map(i => `[${i[0]}]`).join(' ')}`);
+      }
+
+      randomMutation() {
+        for (const k in this.layers) {
+          this.layers[k].active = false;
+        }
+        const allKeys = Object.keys(this.layers);
+        const count = 3 + Math.floor(Math.random() * 3);
+        const activated = [];
+        for (let i = 0; i < count; i++) {
+          const rKey = allKeys[Math.floor(Math.random() * allKeys.length)];
+          this.layers[rKey].active = true;
+          this.layers[rKey].variantIdx = Math.floor(Math.random() * 4);
+          activated.push(`[${rKey}:V${this.layers[rKey].variantIdx + 1}]`);
+        }
+        this.globalVariant = Math.floor(Math.random() * 4);
+        this.broadcastState();
+        this.showToast(`● HYPER MUTATION: ${activated.join(' ')}`);
+      }
+
+      tapTempo() {
+        const now = performance.now();
+        this.tapTimes.push(now);
+        if (this.tapTimes.length > 4) this.tapTimes.shift();
+
+        if (this.tapTimes.length >= 2) {
+          let intervals = [];
+          for (let i = 1; i < this.tapTimes.length; i++) {
+            intervals.push(this.tapTimes[i] - this.tapTimes[i - 1]);
+          }
+          const avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+          const calculatedBpm = 60000 / avgInterval;
+          this.speed = Math.max(0.2, Math.min(4.0, calculatedBpm / 120));
+          this.broadcastState();
+          this.showToast(`● TAP BPM: ${Math.round(calculatedBpm)} BPM`);
+        } else {
+          this.showToast('● TAP AGAIN FOR BPM...');
+        }
+      }
+
+      bindEvents() {
+        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('keydown', (e) => {
+          const key = e.key.toUpperCase();
+
+          // 1. Alt + 1..4: 直接切换全局 Style
+          if (e.altKey && ['1', '2', '3', '4'].includes(e.key)) {
+            e.preventDefault();
+            this.globalVariant = parseInt(e.key) - 1;
+            const styleNames = ['V1 CYBER NEON', 'V2 HYPER LASER', 'V3 ACID RAINBOW', 'V4 GLITCH NOIR'];
+            this.showToast(`● STYLE: ${styleNames[this.globalVariant]}`);
+            this.broadcastState();
+            return;
+          }
+
+          // 2. Shift + 1..4: 设置最后选中的插件变体
+          if (e.shiftKey && ['1', '2', '3', '4'].includes(e.key)) {
+            e.preventDefault();
+            if (this.lastFocusedKey && this.layers[this.lastFocusedKey]) {
+              const vIdx = parseInt(e.key) - 1;
+              this.layers[this.lastFocusedKey].variantIdx = vIdx;
+              this.showToast(`● [${this.lastFocusedKey}] VARIANT -> V${vIdx + 1}`);
+              this.broadcastState();
+            }
+            return;
+          }
+
+          // 3. 数字键 1..5: 快速场景 Cues, 6 / ` / Tab: 随机突变
+          if (!e.shiftKey && !e.altKey && !e.ctrlKey) {
+            if (e.key === '1') {
+              e.preventDefault();
+              this.loadCue([['M',0],['U',1],['Y',0]], 0, 1.0);
+              return;
+            } else if (e.key === '2') {
+              e.preventDefault();
+              this.loadCue([['I',1],['W',0],['V',2]], 1, 1.4);
+              return;
+            } else if (e.key === '3') {
+              e.preventDefault();
+              this.loadCue([['F',1],['C',1],['Q',2],['X',0]], 1, 1.6);
+              return;
+            } else if (e.key === '4') {
+              e.preventDefault();
+              this.loadCue([['A',0],['B',2],['S',0],['E',0]], 3, 2.0);
+              return;
+            } else if (e.key === '5') {
+              e.preventDefault();
+              this.loadCue([['D',1],['H',2],['K',1],['Z',0]], 2, 1.2);
+              return;
+            } else if (e.key === '6' || e.key === '`' || e.key === 'Tab') {
+              e.preventDefault();
+              this.randomMutation();
+              return;
+            } else if (e.key === '0') {
+              e.preventDefault();
+              this.speed = 1.0;
+              this.showToast('● SPEED: 1.00x (120 BPM)');
+              this.broadcastState();
+              return;
+            }
+          }
+
+          // 4. A - Z 插件控制
+          if (this.layers[key] !== undefined) {
+            e.preventDefault();
+            this.lastFocusedKey = key;
+            if (e.ctrlKey) {
+              // Ctrl + Key: Flash Burst
+              this.layers[key].intensity = 1.0;
+              this.channel.postMessage({ type: 'FLASH_BURST', key: key });
+              this.showToast(`● FLASH BURST [${key}]`);
+            } else if (e.shiftKey) {
+              // Shift + Key: 循环切换该插件变体
+              this.layers[key].variantIdx = (this.layers[key].variantIdx + 1) % 4;
+              const plug = plugins[key];
+              const varName = plug?.variants[this.layers[key].variantIdx]?.name || `V${this.layers[key].variantIdx + 1}`;
+              this.showToast(`● [${key}] VARIANT -> V${this.layers[key].variantIdx + 1} (${varName})`);
+              this.broadcastState();
+            } else {
+              // 单按字母键: 开关该插件
+              this.layers[key].active = !this.layers[key].active;
+              this.showToast(`● PLUGIN [${key}] -> ${this.layers[key].active ? 'ON' : 'OFF'}`);
+              this.broadcastState();
+            }
+            return;
+          }
+
+          // 5. 空格键: Master Blackout
+          if (e.code === 'Space') {
+            e.preventDefault();
+            this.blackout = !this.blackout;
+            this.showToast(this.blackout ? '● BLACKOUT ACTIVE' : '● MASTER LIVE');
+            this.broadcastState();
+            return;
+          }
+
+          // 6. Escape: 清除全部插件
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            for (const k in this.layers) this.layers[k].active = false;
+            this.showToast('● ALL PLUGINS CLEARED');
+            this.broadcastState();
+            return;
+          }
+
+          // 7. 方向键控制速度与全局 Style
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.speed = Math.min(4.0, +(this.speed + (e.shiftKey ? 0.5 : 0.1)).toFixed(2));
+            this.showToast(`● SPEED: ${this.speed.toFixed(2)}x (${Math.round(120 * this.speed)} BPM)`);
+            this.broadcastState();
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.speed = Math.max(0.2, +(this.speed - (e.shiftKey ? 0.5 : 0.1)).toFixed(2));
+            this.showToast(`● SPEED: ${this.speed.toFixed(2)}x (${Math.round(120 * this.speed)} BPM)`);
+            this.broadcastState();
+          } else if (e.key === 'ArrowRight' || e.key === ']') {
+            e.preventDefault();
+            this.globalVariant = (this.globalVariant + 1) % 4;
+            const styleNames = ['V1 CYBER NEON', 'V2 HYPER LASER', 'V3 ACID RAINBOW', 'V4 GLITCH NOIR'];
+            this.showToast(`● STYLE: ${styleNames[this.globalVariant]}`);
+            this.broadcastState();
+          } else if (e.key === 'ArrowLeft' || e.key === '[') {
+            e.preventDefault();
+            this.globalVariant = (this.globalVariant + 3) % 4;
+            const styleNames = ['V1 CYBER NEON', 'V2 HYPER LASER', 'V3 ACID RAINBOW', 'V4 GLITCH NOIR'];
+            this.showToast(`● STYLE: ${styleNames[this.globalVariant]}`);
+            this.broadcastState();
+          }
+
+          // 8. Tap Tempo
+          if (e.key === 'Enter' || e.key === '\\') {
+            e.preventDefault();
+            this.tapTempo();
+          }
+
+          // 9. 全屏
+          if (e.key === 'F11') {
+            e.preventDefault();
+            this.toggleFullscreen();
+          }
+        });
+      }
+
+      resize() {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.canvas.width = Math.floor(this.width * this.dpr);
+        this.canvas.height = Math.floor(this.height * this.dpr);
+        this.ctx.scale(this.dpr, this.dpr);
+      }
+
+      loop(currentTime) {
+        requestAnimationFrame(this.loop);
+
+        const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
+        this.lastTime = currentTime;
+
+        this.accumulatedTime += dt * this.speed;
+        const time = this.accumulatedTime;
+        const v = this.globalVariant;
+
+        // 平滑插值淡入淡出权重
+        for (const k in this.layers) {
+          const l = this.layers[k];
+          const target = (this.blackout ? false : l.active) ? 1.0 : 0.0;
+          l.intensity += (target - l.intensity) * (dt * 18);
+          if (l.intensity < 0.001) l.intensity = 0;
+        }
+
+        // 1. 全黑背景底板
+        this.ctx.globalCompositeOperation = 'source-over';
+        this.ctx.fillStyle = '#000000';
+        this.ctx.fillRect(0, 0, this.width, this.height);
+
+        if (this.blackout) return;
+
+        const ctx = this.ctx;
+        const w = this.width;
+        const h = this.height;
+        const cx = w * 0.5;
+        const cy = h * 0.5;
+        const maxDim = Math.max(w, h);
+
+        // 2. 依次调度渲染所有活跃的插件
+        for (let i = 0; i < pluginList.length; i++) {
+          const plug = pluginList[i];
+          const layerState = this.layers[plug.key];
+          if (!layerState || layerState.intensity <= 0) continue;
+
+          const renderState = {
+            width: w,
+            height: h,
+            cx: cx,
+            cy: cy,
+            maxDim: maxDim,
+            time: time,
+            speed: this.speed,
+            intensity: layerState.intensity,
+            globalVariant: v,
+            pluginVariant: layerState.variantIdx,
+            utils: utils
+          };
+
+          try {
+            plug.render(ctx, renderState, layerState.variantIdx);
+          } catch (err) {
+            console.error(`Error rendering plugin ${plug.key}:`, err);
+          }
+        }
+      }
+    }
+
+    const canvas = document.getElementById('canvas');
+    window.stageEngine = new ModularStageEngine(canvas);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VJ MASTER CONSOLE - MODULAR PLUGIN MATRIX (26 PLUGINS x 104 VARIANTS)</title>
+  <style>
+    :root {
+      --bg-base: #08090d;
+      --bg-panel: #10141d;
+      --bg-card: #171c28;
+      --bg-hover: #22293b;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-active: rgba(0, 240, 255, 0.5);
+      
+      --neon-cyan: #00f0ff;
+      --neon-pink: #ff007f;
+      --neon-amber: #ffb700;
+      --neon-green: #00ff88;
+      --neon-red: #ff2a4b;
+      --neon-purple: #a855f7;
+      
+      --text-main: #f0f4fc;
+      --text-dim: #7d8b9f;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* 顶部导航控制条 */
+    header {
+      background: rgba(16, 20, 29, 0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+      color: #000;
+      font-weight: 900;
+      font-size: 13px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      letter-spacing: 1.5px;
+    }
+    .brand-title h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #fff, #a2b2c8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-title p {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+
+    .dual-screen-manager {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .screen-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .status-led {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #444;
+      transition: all 0.3s;
+    }
+    .status-led.online {
+      background: var(--neon-green);
+      box-shadow: 0 0 10px var(--neon-green);
+    }
+
+    .btn-action {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 1px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-action:hover {
+      background: var(--bg-hover);
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+    }
+
+    .btn-launch-screen {
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(255, 0, 128, 0.2));
+      border: 1px solid var(--neon-cyan);
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 1px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+    }
+    .btn-launch-screen:hover {
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+      color: #000;
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+    }
+
+    .btn-blackout {
+      background: rgba(255, 42, 75, 0.15);
+      border: 1px solid var(--neon-red);
+      color: var(--neon-red);
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 1.5px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-blackout.active, .btn-blackout:hover {
+      background: var(--neon-red);
+      color: #fff;
+      box-shadow: 0 0 25px rgba(255, 42, 75, 0.8);
+      transform: scale(1.02);
+    }
+
+    /* 主工作区布局 */
+    .workspace {
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 370px 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+
+    @media (max-width: 1160px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 左侧控制台 */
+    .master-dock {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .panel-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .panel-title::before {
+      content: '';
+      width: 4px;
+      height: 12px;
+      background: var(--neon-cyan);
+      border-radius: 2px;
+    }
+
+    /* Program Monitor 实时画中画监视器 */
+    .monitor-box {
+      width: 100%;
+      height: 195px;
+      background: #000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      position: relative;
+    }
+    #preview-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .monitor-overlay {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-family: monospace;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(0, 0, 0, 0.65);
+      padding: 4px 8px;
+      border-radius: 4px;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    /* 速度与主节拍调节 */
+    .tempo-strip {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tempo-readout {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .tempo-val {
+      font-size: 28px;
+      font-weight: 900;
+      font-family: monospace;
+      color: var(--neon-cyan);
+      line-height: 1;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+    }
+    .tempo-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .fader-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #252c3c;
+      outline: none;
+      transition: background 0.2s;
+    }
+    .fader-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 12px var(--neon-cyan);
+    }
+
+    .speed-presets {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .speed-btn, .tap-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 6px 0;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .speed-btn:hover, .speed-btn.active {
+      background: var(--neon-cyan);
+      color: #000;
+      border-color: var(--neon-cyan);
+    }
+    .tap-btn {
+      background: rgba(255, 183, 0, 0.15);
+      border-color: var(--neon-amber);
+      color: var(--neon-amber);
+    }
+    .tap-btn:active {
+      background: var(--neon-amber);
+      color: #000;
+      transform: scale(0.96);
+    }
+
+    /* 4 大全局色彩/滤镜形态 */
+    .variants-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .var-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+    .var-card:hover {
+      background: var(--bg-hover);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    .var-card.active {
+      border-color: var(--neon-pink);
+      background: rgba(255, 0, 128, 0.15);
+      box-shadow: 0 0 15px rgba(255, 0, 128, 0.3);
+    }
+    .var-card .key-hint {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 9px;
+      font-family: monospace;
+      color: var(--text-dim);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 5px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .var-card.active .key-hint {
+      color: var(--neon-pink);
+      border-color: var(--neon-pink);
+    }
+    .var-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+    .var-desc {
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+
+    /* Quick Scenes / Cues */
+    .cues-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .cue-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      color: #fff;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .cue-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--neon-cyan);
+      transform: translateY(-1px);
+    }
+    .cue-btn .key-hint {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 9px;
+      font-family: monospace;
+      color: var(--text-dim);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 5px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .cue-title {
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cue-tags {
+      font-size: 9px;
+      color: var(--text-dim);
+      margin-top: 3px;
+      font-family: monospace;
+    }
+
+    /* ================= 右侧 26 通道插件矩阵 ================= */
+    .matrix-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .bank-section {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .bank-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bank-tag {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--neon-cyan);
+    }
+    .bank-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 12px;
+    }
+
+    /* 单个插件通道条 (Plugin Channel Strip) */
+    .channel-strip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      transition: all 0.15s ease;
+    }
+    .channel-strip:hover {
+      background: var(--bg-hover);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .channel-strip.active {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.08);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.2);
+    }
+    .channel-strip.focused {
+      box-shadow: 0 0 0 2px var(--neon-amber), 0 0 20px rgba(255, 183, 0, 0.4);
+    }
+
+    .strip-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .key-badge {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.15s;
+    }
+    .channel-strip.active .key-badge {
+      background: var(--neon-cyan);
+      color: #000;
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 10px var(--neon-cyan);
+    }
+    .key-badge.pressed {
+      transform: scale(0.85);
+      background: #fff !important;
+      color: #000 !important;
+    }
+
+    .strip-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .strip-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .strip-desc {
+      font-size: 9px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 插件变体选择器 (Variant Pills) */
+    .variant-pills-row {
+      display: flex;
+      gap: 4px;
+    }
+    .variant-pill {
+      flex: 1;
+      padding: 3px 0;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-size: 9px;
+      font-weight: 700;
+      font-family: monospace;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .variant-pill:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+    .variant-pill.active {
+      background: var(--neon-purple);
+      border-color: var(--neon-purple);
+      color: #fff;
+      box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+    }
+
+    .strip-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .btn-toggle-strip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 5px 0;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .channel-strip.active .btn-toggle-strip {
+      background: var(--neon-cyan);
+      color: #000;
+      border-color: var(--neon-cyan);
+    }
+    .btn-flash-strip {
+      background: rgba(255, 0, 128, 0.15);
+      border: 1px solid rgba(255, 0, 128, 0.4);
+      color: var(--neon-pink);
+      padding: 5px 0;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.08s;
+    }
+    .btn-flash-strip:active {
+      background: var(--neon-pink);
+      color: #fff;
+      box-shadow: 0 0 12px var(--neon-pink);
+      transform: scale(0.95);
+    }
+
+    /* 快捷键 HUD Toast 提示条 */
+    .hud-toast {
+      position: fixed;
+      bottom: 45px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(15, 20, 30, 0.92);
+      border: 1px solid var(--neon-cyan);
+      color: #fff;
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 8px 24px;
+      border-radius: 20px;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hud-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 全屏快捷键速查表模态窗口 (Cheat Sheet Modal) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.85);
+      backdrop-filter: blur(16px);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding: 20px;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-container {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-active);
+      border-radius: var(--radius-lg);
+      max-width: 860px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.25);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .modal-header h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-close {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #fff;
+      font-size: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .modal-close:hover {
+      background: var(--neon-red);
+      border-color: var(--neon-red);
+    }
+    .shortcut-sections {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 768px) {
+      .shortcut-sections {
+        grid-template-columns: 1fr;
+      }
+    }
+    .shortcut-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .shortcut-group-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+      letter-spacing: 1px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 6px;
+    }
+    .shortcut-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .shortcut-label {
+      color: var(--text-dim);
+    }
+    .shortcut-keys {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .k-badge {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-family: monospace;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    /* 底部状态栏 */
+    footer {
+      background: rgba(16, 20, 29, 0.95);
+      border-top: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: monospace;
+    }
+    .footer-tags {
+      display: flex;
+      gap: 16px;
+    }
+    .footer-tags span b {
+      color: var(--neon-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部导航条 -->
+  <header>
+    <div class="brand-section">
+      <div class="logo-badge">VJ MODULAR</div>
+      <div class="brand-title">
+        <h1>Modular Strobe Engine</h1>
+        <p>A - Z Plugin Matrix & Master Console</p>
+      </div>
+    </div>
+
+    <div class="dual-screen-manager">
+      <div class="screen-status-badge">
+        <span class="status-led" id="screen-led"></span>
+        <span id="screen-status-text">STAGE: SEARCHING...</span>
+      </div>
+      <button class="btn-launch-screen" onclick="controller.openStageScreen()" title="在新窗口中打开独立的纯净大屏幕舞台渲染端">
+        ⛶ 打开独立舞台大屏 (STAGE SCREEN)
+      </button>
+      <button class="btn-action" onclick="controller.toggleShortcutModal(true)" title="查看所有键盘快捷键矩阵">
+        ⌨️ 快捷键速查 (?)
+      </button>
+      <button class="btn-blackout" id="blackout-btn" onclick="controller.toggleBlackout()">
+        ⚡ BLACKOUT [SPACE]
+      </button>
+    </div>
+  </header>
+
+  <!-- 主操作区 -->
+  <main class="workspace">
+    
+    <!-- 左侧：主控 Dock -->
+    <section class="master-dock">
+      
+      <!-- 1. Program Monitor 实时画中画预览 -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Program Monitor (实时监视)</span>
+          <span style="font-size: 10px; color: var(--neon-green); font-family: monospace;">● LIVE 60 FPS</span>
+        </div>
+        <div class="monitor-box">
+          <canvas id="preview-canvas"></canvas>
+          <div class="monitor-overlay">
+            <span id="mon-speed">1.0x (120 BPM)</span>
+            <span id="mon-variant">V1 CYBER NEON</span>
+            <span id="mon-layers">ACTIVE: 2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Master Tempo & BPM 控制 -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Master Tempo & Speed</span>
+          <span style="font-size: 10px; color: var(--text-dim); font-family: monospace;">[↑/↓ / TAP]</span>
+        </div>
+        <div class="tempo-strip">
+          <div class="tempo-readout">
+            <div>
+              <span class="tempo-val" id="tempo-display">120</span>
+              <span class="tempo-sub"> BPM</span>
+            </div>
+            <div class="tempo-sub" id="speed-display">1.00x</div>
+          </div>
+          <input type="range" class="fader-slider" id="speed-fader" min="0.2" max="4.0" step="0.05" value="1.0" oninput="controller.setSpeed(parseFloat(this.value))">
+          <div class="speed-presets">
+            <button class="speed-btn" onclick="controller.setSpeed(0.5)">0.5x</button>
+            <button class="speed-btn" onclick="controller.setSpeed(1.0)">1.0x</button>
+            <button class="speed-btn" onclick="controller.setSpeed(1.5)">1.5x</button>
+            <button class="speed-btn" onclick="controller.setSpeed(2.0)">2.0x</button>
+            <button class="tap-btn" onclick="controller.tapTempo()" title="按 Enter 或连续点击计算节拍">🥁 TAP</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Global Color Styles 全局色彩变体 -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Global Color Styles (色彩模式)</span>
+          <span style="font-size: 10px; color: var(--text-dim); font-family: monospace;">[ALT+1~4]</span>
+        </div>
+        <div class="variants-grid">
+          <div class="var-card active" id="var-0" onclick="controller.setGlobalVariant(0)">
+            <span class="key-hint">Alt+1</span>
+            <span class="var-title" style="color: var(--neon-cyan);">CYBER NEON</span>
+            <span class="var-desc">经典赛博青粉霓虹</span>
+          </div>
+          <div class="var-card" id="var-1" onclick="controller.setGlobalVariant(1)">
+            <span class="key-hint">Alt+2</span>
+            <span class="var-title" style="color: #fff;">HYPER LASER</span>
+            <span class="var-desc">极限高对比度纯白激光</span>
+          </div>
+          <div class="var-card" id="var-2" onclick="controller.setGlobalVariant(2)">
+            <span class="key-hint">Alt+3</span>
+            <span class="var-title" style="color: var(--neon-amber);">ACID RAINBOW</span>
+            <span class="var-desc">全色谱动态彩虹流动</span>
+          </div>
+          <div class="var-card" id="var-3" onclick="controller.setGlobalVariant(3)">
+            <span class="key-hint">Alt+4</span>
+            <span class="var-title" style="color: #aaa;">GLITCH NOIR</span>
+            <span class="var-desc">反色切片黑白硬核工业</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Quick Cues & Mutation 场景预设 -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Master Cues & Mutation</span>
+          <span style="font-size: 10px; color: var(--text-dim); font-family: monospace;">[1~6 / `]</span>
+        </div>
+        <div class="cues-grid">
+          <button class="cue-btn" onclick="controller.loadCue([['M',0],['U',1],['Y',0]], 0, 1.0)">
+            <span class="key-hint">1</span>
+            <div class="cue-title">🌌 Synth Matrix</div>
+            <div class="cue-tags">M:V1 + U:V2 + Y:V1</div>
+          </button>
+          <button class="cue-btn" onclick="controller.loadCue([['I',1],['W',0],['V',2]], 1, 1.4)">
+            <span class="key-hint">2</span>
+            <div class="cue-title">⚡ Warp Speed</div>
+            <div class="cue-tags">I:V2 + W:V1 + V:V3</div>
+          </button>
+          <button class="cue-btn" onclick="controller.loadCue([['F',1],['C',1],['Q',2],['X',0]], 1, 1.6)">
+            <span class="key-hint">3</span>
+            <div class="cue-title">🔥 Laser Chaos</div>
+            <div class="cue-tags">F:V2 + C:V2 + Q:V3</div>
+          </button>
+          <button class="cue-btn" onclick="controller.loadCue([['A',0],['B',2],['S',0],['E',0]], 3, 2.0)">
+            <span class="key-hint">4</span>
+            <div class="cue-title">💀 Hardcore Rave</div>
+            <div class="cue-tags">A:V1 + B:V3 + S:V1</div>
+          </button>
+          <button class="cue-btn" onclick="controller.loadCue([['D',1],['H',2],['K',1],['Z',0]], 2, 1.2)">
+            <span class="key-hint">5</span>
+            <div class="cue-title">🌈 Acid Dream</div>
+            <div class="cue-tags">D:V2 + H:V3 + K:V2</div>
+          </button>
+          <button class="cue-btn" onclick="controller.randomMutation()" style="background: rgba(168, 85, 247, 0.15); border-color: var(--neon-purple);">
+            <span class="key-hint" style="color: var(--neon-purple);">6 / `</span>
+            <div class="cue-title" style="color: var(--neon-purple);">🎲 Hyper Mutation</div>
+            <div class="cue-tags">随机插件 + 变体分配</div>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 右侧：26 通道插件矩阵 (Bank A - D) -->
+    <section class="matrix-container" id="matrix-banks">
+      <!-- 动态由 JavaScript 渲染 26 个插件通道条 -->
+    </section>
+
+  </main>
+
+  <!-- 浮动 HUD Toast 提示 -->
+  <div class="hud-toast" id="hud-toast">
+    ● READY
+  </div>
+
+  <!-- 全屏快捷键速查表模态窗 (Shortcut Modal) -->
+  <div class="modal-overlay" id="shortcut-modal" onclick="if(event.target===this)controller.toggleShortcutModal(false)">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>⌨️ VJ MASTER KEYBOARD SHORTCUT MATRIX (全键盘专业快捷键矩阵)</h2>
+        <button class="modal-close" onclick="controller.toggleShortcutModal(false)">✕</button>
+      </div>
+
+      <div class="shortcut-sections">
+        
+        <!-- 1. 插件触发与变体 -->
+        <div class="shortcut-group">
+          <div class="shortcut-group-title">🎛️ PLUGIN TRIGGERS & VARIANTS (插件与变体控制)</div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Toggle Plugin Channel On/Off</span>
+            <div class="shortcut-keys"><span class="k-badge">A</span> ~ <span class="k-badge">Z</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Cycle Variant for Plugin (V1➔V2➔V3➔V4)</span>
+            <div class="shortcut-keys"><span class="k-badge">Shift</span> + <span class="k-badge">A-Z</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Instant Flash Burst (满功率瞬爆)</span>
+            <div class="shortcut-keys"><span class="k-badge">Ctrl</span> + <span class="k-badge">A-Z</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Set Focused Plugin to Variant 1~4</span>
+            <div class="shortcut-keys"><span class="k-badge">Shift</span> + <span class="k-badge">1-4</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Clear / Kill All Active Plugins</span>
+            <div class="shortcut-keys"><span class="k-badge">Esc</span></div>
+          </div>
+        </div>
+
+        <!-- 2. 全局色彩 Style Variants -->
+        <div class="shortcut-group">
+          <div class="shortcut-group-title">🎨 GLOBAL COLOR STYLES (全局色彩变体)</div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Style 1: Cyber Neon (霓虹辉光)</span>
+            <div class="shortcut-keys"><span class="k-badge">Alt</span> + <span class="k-badge">1</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Style 2: Hyper Laser (纯白激光)</span>
+            <div class="shortcut-keys"><span class="k-badge">Alt</span> + <span class="k-badge">2</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Style 3: Acid Rainbow (全色谱彩虹)</span>
+            <div class="shortcut-keys"><span class="k-badge">Alt</span> + <span class="k-badge">3</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Style 4: Glitch Noir (反色黑白)</span>
+            <div class="shortcut-keys"><span class="k-badge">Alt</span> + <span class="k-badge">4</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Previous / Next Color Style</span>
+            <div class="shortcut-keys"><span class="k-badge">←</span> <span class="k-badge">→</span> 或 <span class="k-badge">[</span> <span class="k-badge">]</span></div>
+          </div>
+        </div>
+
+        <!-- 3. 场景 Cues & 随机突变 -->
+        <div class="shortcut-group">
+          <div class="shortcut-group-title">🎬 SCENE CUES & MUTATION (场景预设与突变)</div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Trigger Cue 1 ~ 5 (经典组合)</span>
+            <div class="shortcut-keys"><span class="k-badge">1</span> ~ <span class="k-badge">5</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">🎲 Hyper Mutation (超空间随机突变)</span>
+            <div class="shortcut-keys"><span class="k-badge">6</span> 或 <span class="k-badge">`</span> 或 <span class="k-badge">Tab</span></div>
+          </div>
+        </div>
+
+        <!-- 4. 速度、节拍与主控 -->
+        <div class="shortcut-group">
+          <div class="shortcut-group-title">⚡ TEMPO & MASTER (速度、节拍与主控)</div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Master Speed Multiplier (±0.1x)</span>
+            <div class="shortcut-keys"><span class="k-badge">↑</span> <span class="k-badge">↓</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Master Speed Step (±0.5x)</span>
+            <div class="shortcut-keys"><span class="k-badge">Shift</span> + <span class="k-badge">↑/↓</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Reset Speed to 1.00x (120 BPM)</span>
+            <div class="shortcut-keys"><span class="k-badge">0</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">🥁 Tap BPM Beat Calculator</span>
+            <div class="shortcut-keys"><span class="k-badge">Enter</span> 或 <span class="k-badge">\</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">⚡ Master Blackout (全黑切断)</span>
+            <div class="shortcut-keys"><span class="k-badge">Space</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Toggle Fullscreen (全屏切换)</span>
+            <div class="shortcut-keys"><span class="k-badge">F</span> 或 <span class="k-badge">F11</span></div>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label">Open / Close This Shortcut Matrix</span>
+            <div class="shortcut-keys"><span class="k-badge">?</span> 或 <span class="k-badge">/</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部状态条 -->
+  <footer>
+    <div class="footer-tags">
+      <span>SHORTCUTS: <b>A-Z (TOGGLE)</b> | <b>SHIFT + A-Z (CYCLE VAR)</b> | <b>ALT + 1-4 (STYLES)</b> | <b>1-6 (CUES)</b> | <b>SPACE (B.O.)</b> | <b>? (HELP)</b></span>
+    </div>
+    <div>
+      <span>PLUGINS: <b>26 MODULES / 104 VARIANTS</b> • DUAL SCREEN 60FPS</span>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { plugins, pluginList, bankGroups, utils } from './plugins/index.js';
+
+    class VJMasterController {
+      constructor() {
+        this.plugins = plugins;
+        this.pluginList = pluginList;
+        this.bankGroups = bankGroups;
+        this.utils = utils;
+
+        // 核心同步状态
+        this.speed = 1.0;
+        this.globalVariant = 0;
+        this.blackout = false;
+        this.focusedKey = 'D'; // 当前焦点选中的插件
+
+        // 26 个插件层状态
+        this.layers = {};
+        for (let i = 65; i <= 90; i++) {
+          const char = String.fromCharCode(i);
+          this.layers[char] = {
+            active: false,
+            variantIdx: 0 // 0, 1, 2, 3
+          };
+        }
+        // 默认激活 D + M
+        if (this.layers['D']) this.layers['D'].active = true;
+        if (this.layers['M']) this.layers['M'].active = true;
+
+        // 双屏广播总线
+        this.channel = new BroadcastChannel('disco_dual_screen_bus');
+        this.stageWindow = null;
+        this.lastHeartbeat = 0;
+
+        // Tap BPM 计时器
+        this.tapTimes = [];
+        this.hudTimer = null;
+
+        // UI 引用
+        this.screenLed = document.getElementById('screen-led');
+        this.screenStatusText = document.getElementById('screen-status-text');
+        this.tempoDisplay = document.getElementById('tempo-display');
+        this.speedDisplay = document.getElementById('speed-display');
+        this.speedFader = document.getElementById('speed-fader');
+        this.blackoutBtn = document.getElementById('blackout-btn');
+        this.monSpeed = document.getElementById('mon-speed');
+        this.monVariant = document.getElementById('mon-variant');
+        this.monLayers = document.getElementById('mon-layers');
+        this.hudToastEl = document.getElementById('hud-toast');
+        this.shortcutModalEl = document.getElementById('shortcut-modal');
+
+        // 初始化 Program Monitor 迷你画布
+        this.initPreviewCanvas();
+        this.renderMatrixBanks();
+        this.setupComms();
+        this.bindEvents();
+        this.updateUI();
+
+        // 周期性探测 Stage Screen 连接状态
+        setInterval(() => this.checkStageHealth(), 1000);
+      }
+
+      initPreviewCanvas() {
+        this.prevCanvas = document.getElementById('preview-canvas');
+        this.pctx = this.prevCanvas.getContext('2d', { alpha: false });
+        this.prevWidth = 370;
+        this.prevHeight = 195;
+        this.prevCanvas.width = this.prevWidth;
+        this.prevCanvas.height = this.prevHeight;
+
+        this.accumulatedTime = 0;
+        this.lastTime = performance.now();
+
+        this.previewLoop = this.previewLoop.bind(this);
+        requestAnimationFrame(this.previewLoop);
+      }
+
+      showHudToast(text) {
+        if (!this.hudToastEl) return;
+        this.hudToastEl.innerText = text;
+        this.hudToastEl.classList.add('show');
+        clearTimeout(this.hudTimer);
+        this.hudTimer = setTimeout(() => {
+          this.hudToastEl.classList.remove('show');
+        }, 1800);
+      }
+
+      toggleShortcutModal(open) {
+        if (!this.shortcutModalEl) return;
+        if (open === undefined) {
+          this.shortcutModalEl.classList.toggle('open');
+        } else if (open) {
+          this.shortcutModalEl.classList.add('open');
+        } else {
+          this.shortcutModalEl.classList.remove('open');
+        }
+      }
+
+      setupComms() {
+        this.channel.onmessage = (event) => {
+          const msg = event.data;
+          if (!msg || !msg.type) return;
+
+          if (msg.type === 'SCREEN_HEARTBEAT') {
+            this.lastHeartbeat = Date.now();
+            this.setStageConnected(true);
+          } else if (msg.type === 'SYNC_STATE') {
+            if (msg.layers) {
+              for (const k in msg.layers) {
+                if (this.layers[k]) {
+                  if (typeof msg.layers[k] === 'boolean') {
+                    this.layers[k].active = msg.layers[k];
+                  } else if (typeof msg.layers[k] === 'object') {
+                    if (msg.layers[k].active !== undefined) this.layers[k].active = msg.layers[k].active;
+                    if (msg.layers[k].variantIdx !== undefined) this.layers[k].variantIdx = msg.layers[k].variantIdx;
+                  }
+                }
+              }
+            }
+            if (msg.speed !== undefined) this.speed = msg.speed;
+            if (msg.variantIdx !== undefined) this.globalVariant = msg.variantIdx;
+            if (msg.globalVariant !== undefined) this.globalVariant = msg.globalVariant;
+            if (msg.blackout !== undefined) this.blackout = msg.blackout;
+            this.updateUI();
+          }
+        };
+
+        // 发送握手探测包
+        this.channel.postMessage({ type: 'PING_CONSOLE' });
+      }
+
+      checkStageHealth() {
+        const isAlive = (Date.now() - this.lastHeartbeat) < 3000;
+        this.setStageConnected(isAlive);
+      }
+
+      setStageConnected(connected) {
+        if (connected) {
+          this.screenLed.classList.add('online');
+          this.screenStatusText.innerText = 'STAGE: CONNECTED (60 FPS)';
+          this.screenStatusText.style.color = 'var(--neon-green)';
+        } else {
+          this.screenLed.classList.remove('online');
+          this.screenStatusText.innerText = 'STAGE: DISCONNECTED';
+          this.screenStatusText.style.color = 'var(--text-dim)';
+        }
+      }
+
+      openStageScreen() {
+        const screenUrl = 'screen.html';
+        const strWindowFeatures = "menubar=no,location=no,resizable=yes,scrollbars=no,status=no";
+        this.stageWindow = window.open(screenUrl, 'StrobeStageDisplay', strWindowFeatures);
+        setTimeout(() => {
+          this.broadcastAll();
+        }, 500);
+      }
+
+      broadcastAll() {
+        const stateLayers = {};
+        for (const k in this.layers) {
+          stateLayers[k] = {
+            active: this.layers[k].active,
+            variantIdx: this.layers[k].variantIdx
+          };
+        }
+        this.channel.postMessage({
+          type: 'SYNC_STATE',
+          layers: stateLayers,
+          speed: this.speed,
+          globalVariant: this.globalVariant,
+          variantIdx: this.globalVariant,
+          blackout: this.blackout
+        });
+      }
+
+      setFocus(key) {
+        this.focusedKey = key;
+        document.querySelectorAll('.channel-strip').forEach(el => el.classList.remove('focused'));
+        const strip = document.getElementById(`strip-${key}`);
+        if (strip) strip.classList.add('focused');
+      }
+
+      flashBadge(key) {
+        const badge = document.querySelector(`#strip-${key} .key-badge`);
+        if (badge) {
+          badge.classList.add('pressed');
+          setTimeout(() => badge.classList.remove('pressed'), 140);
+        }
+      }
+
+      toggleLayer(key) {
+        if (!this.layers[key]) return;
+        this.layers[key].active = !this.layers[key].active;
+        this.setFocus(key);
+        this.flashBadge(key);
+        this.channel.postMessage({ type: 'TOGGLE_LAYER', key: key, active: this.layers[key].active });
+        const plug = this.plugins[key];
+        const status = this.layers[key].active ? 'ON' : 'OFF';
+        this.showHudToast(`🎛️ PLUGIN [${key}] ${plug ? plug.name : ''} ➔ ${status}`);
+        this.updateUI();
+      }
+
+      setPluginVariant(key, variantIdx) {
+        if (!this.layers[key]) return;
+        this.layers[key].variantIdx = variantIdx;
+        this.setFocus(key);
+        this.channel.postMessage({ type: 'SET_PLUGIN_VARIANT', key: key, variantIdx: variantIdx });
+        const plug = this.plugins[key];
+        const varName = plug?.variants[variantIdx]?.name || `V${variantIdx + 1}`;
+        this.showHudToast(`✨ [${key}] VARIANT: V${variantIdx + 1} (${varName})`);
+        this.updateUI();
+      }
+
+      flashLayer(key) {
+        this.channel.postMessage({ type: 'FLASH_BURST', key: key });
+        this.flashBadge(key);
+        this.showHudToast(`💥 FLASH BURST [${key}]`);
+      }
+
+      setSpeed(val) {
+        this.speed = Math.max(0.2, Math.min(4.0, +val.toFixed(2)));
+        this.channel.postMessage({ type: 'SET_SPEED', speed: this.speed });
+        const bpm = Math.round(120 * this.speed);
+        this.showHudToast(`⚡ SPEED: ${this.speed.toFixed(2)}x (${bpm} BPM)`);
+        this.updateUI();
+      }
+
+      setGlobalVariant(idx) {
+        this.globalVariant = idx;
+        this.channel.postMessage({ type: 'SET_VARIANT', globalVariant: this.globalVariant, variantIdx: this.globalVariant });
+        const styleNames = ['V1 CYBER NEON', 'V2 HYPER LASER', 'V3 ACID RAINBOW', 'V4 GLITCH NOIR'];
+        this.showHudToast(`🎨 STYLE: ${styleNames[idx]}`);
+        this.updateUI();
+      }
+
+      toggleBlackout() {
+        this.blackout = !this.blackout;
+        this.channel.postMessage({ type: 'BLACKOUT', active: this.blackout });
+        this.showHudToast(this.blackout ? '⚡ BLACKOUT ACTIVE (MUTED)' : '● MASTER LIVE (UNMUTED)');
+        this.updateUI();
+      }
+
+      clearAllLayers() {
+        for (const k in this.layers) {
+          this.layers[k].active = false;
+        }
+        this.broadcastAll();
+        this.showHudToast('🧹 ALL PLUGINS CLEARED');
+        this.updateUI();
+      }
+
+      loadCue(pluginConfigs, globalVariant, speed) {
+        for (const k in this.layers) {
+          this.layers[k].active = false;
+        }
+        pluginConfigs.forEach(item => {
+          const key = item[0];
+          const vIdx = item[1] || 0;
+          if (this.layers[key]) {
+            this.layers[key].active = true;
+            this.layers[key].variantIdx = vIdx;
+          }
+        });
+        this.globalVariant = globalVariant;
+        this.speed = speed;
+        this.blackout = false;
+        this.broadcastAll();
+        this.showHudToast(`🎬 CUE LOADED: ${pluginConfigs.map(i => `[${i[0]}]`).join(' ')}`);
+        this.updateUI();
+      }
+
+      randomMutation() {
+        for (const k in this.layers) {
+          this.layers[k].active = false;
+        }
+        const allKeys = Object.keys(this.layers);
+        const count = 3 + Math.floor(Math.random() * 3);
+        const activated = [];
+        for (let i = 0; i < count; i++) {
+          const rKey = allKeys[Math.floor(Math.random() * allKeys.length)];
+          this.layers[rKey].active = true;
+          this.layers[rKey].variantIdx = Math.floor(Math.random() * 4);
+          activated.push(`[${rKey}:V${this.layers[rKey].variantIdx + 1}]`);
+        }
+        this.globalVariant = Math.floor(Math.random() * 4);
+        this.broadcastAll();
+        this.showHudToast(`🎲 HYPER MUTATION: ${activated.join(' ')}`);
+        this.updateUI();
+      }
+
+      tapTempo() {
+        const now = performance.now();
+        this.tapTimes.push(now);
+        if (this.tapTimes.length > 4) this.tapTimes.shift();
+
+        if (this.tapTimes.length >= 2) {
+          let intervals = [];
+          for (let i = 1; i < this.tapTimes.length; i++) {
+            intervals.push(this.tapTimes[i] - this.tapTimes[i - 1]);
+          }
+          const avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+          const calculatedBpm = 60000 / avgInterval;
+          const targetSpeed = Math.max(0.2, Math.min(4.0, calculatedBpm / 120));
+          this.setSpeed(targetSpeed);
+          this.showHudToast(`🥁 TAP BPM: ${Math.round(calculatedBpm)} BPM (${targetSpeed.toFixed(2)}x)`);
+        } else {
+          this.showHudToast('🥁 TAP AGAIN TO SYNC BPM...');
+        }
+      }
+
+      renderMatrixBanks() {
+        const container = document.getElementById('matrix-banks');
+        container.innerHTML = '';
+
+        this.bankGroups.forEach(bank => {
+          const sec = document.createElement('div');
+          sec.className = 'bank-section';
+          sec.innerHTML = `
+            <div class="bank-header">
+              <span class="bank-tag">${bank.title}</span>
+            </div>
+            <div class="bank-grid" id="grid-${bank.id}"></div>
+          `;
+
+          const grid = sec.querySelector('.bank-grid');
+          bank.plugins.forEach(plug => {
+            const strip = document.createElement('div');
+            strip.className = `channel-strip ${this.layers[plug.key]?.active ? 'active' : ''} ${this.focusedKey === plug.key ? 'focused' : ''}`;
+            strip.id = `strip-${plug.key}`;
+            strip.onclick = () => this.setFocus(plug.key);
+
+            // 渲染 4 个变体药丸
+            let pillsHtml = '';
+            for (let v = 0; v < plug.variants.length; v++) {
+              const vObj = plug.variants[v];
+              const isPillActive = (this.layers[plug.key]?.variantIdx === v);
+              pillsHtml += `
+                <button class="variant-pill ${isPillActive ? 'active' : ''}" 
+                  id="pill-${plug.key}-${v}"
+                  title="${vObj.name}: ${vObj.desc}"
+                  onclick="event.stopPropagation(); controller.setPluginVariant('${plug.key}', ${v})">
+                  V${v + 1}
+                </button>
+              `;
+            }
+
+            strip.innerHTML = `
+              <div class="strip-top">
+                <div class="key-badge" onclick="event.stopPropagation(); controller.toggleLayer('${plug.key}')">${plug.key}</div>
+                <div class="strip-info">
+                  <div class="strip-name">${plug.name}</div>
+                  <div class="strip-desc" id="desc-${plug.key}">${plug.variants[this.layers[plug.key]?.variantIdx || 0]?.name}</div>
+                </div>
+              </div>
+              <div class="variant-pills-row">
+                ${pillsHtml}
+              </div>
+              <div class="strip-actions">
+                <button class="btn-toggle-strip" onclick="event.stopPropagation(); controller.toggleLayer('${plug.key}')">TOGGLE</button>
+                <button class="btn-flash-strip" onpointerdown="event.stopPropagation(); controller.flashLayer('${plug.key}')">FLASH</button>
+              </div>
+            `;
+            grid.appendChild(strip);
+          });
+
+          container.appendChild(sec);
+        });
+      }
+
+      updateUI() {
+        const bpm = Math.round(120 * this.speed);
+        this.tempoDisplay.innerText = bpm;
+        this.speedDisplay.innerText = `${this.speed.toFixed(2)}x`;
+        this.speedFader.value = this.speed;
+
+        this.blackoutBtn.classList.toggle('active', this.blackout);
+        this.blackoutBtn.innerText = this.blackout ? '⚡ BLACKOUT (ACTIVE)' : '⚡ BLACKOUT [SPACE]';
+
+        // 变体卡片高亮
+        for (let i = 0; i < 4; i++) {
+          const card = document.getElementById(`var-${i}`);
+          if (card) card.classList.toggle('active', this.globalVariant === i);
+        }
+
+        // 26 个插件通道条高亮 & 变体药丸更新
+        for (const k in this.layers) {
+          const strip = document.getElementById(`strip-${k}`);
+          const state = this.layers[k];
+          if (strip) {
+            strip.classList.toggle('active', state.active);
+            for (let v = 0; v < 4; v++) {
+              const pill = document.getElementById(`pill-${k}-${v}`);
+              if (pill) pill.classList.toggle('active', state.variantIdx === v);
+            }
+            const descEl = document.getElementById(`desc-${k}`);
+            const plug = this.plugins[k];
+            if (descEl && plug && plug.variants[state.variantIdx]) {
+              descEl.innerText = plug.variants[state.variantIdx].name;
+            }
+          }
+        }
+
+        // 监视器文本更新
+        const varNames = ['V1 CYBER NEON', 'V2 HYPER LASER', 'V3 ACID RAINBOW', 'V4 GLITCH NOIR'];
+        this.monSpeed.innerText = `${this.speed.toFixed(1)}x (${bpm} BPM)`;
+        this.monVariant.innerText = varNames[this.globalVariant];
+        const activeCount = Object.keys(this.layers).filter(k => this.layers[k].active).length;
+        this.monLayers.innerText = `ACTIVE: ${activeCount}`;
+      }
+
+      bindEvents() {
+        window.addEventListener('keydown', (e) => {
+          // 如果焦点在输入框中则不截获
+          if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+
+          const key = e.key.toUpperCase();
+
+          // 1. 帮助面板开关
+          if (e.key === '?' || e.key === '/' || (e.key === 'h' && e.altKey)) {
+            e.preventDefault();
+            this.toggleShortcutModal();
+            return;
+          }
+
+          // 2. Alt + 1..4: 直接切换全局 Style
+          if (e.altKey && ['1', '2', '3', '4'].includes(e.key)) {
+            e.preventDefault();
+            this.setGlobalVariant(parseInt(e.key) - 1);
+            return;
+          }
+
+          // 3. Shift + 1..4: 设置当前选中的插件变体
+          if (e.shiftKey && ['1', '2', '3', '4'].includes(e.key)) {
+            e.preventDefault();
+            if (this.focusedKey && this.layers[this.focusedKey]) {
+              this.setPluginVariant(this.focusedKey, parseInt(e.key) - 1);
+            }
+            return;
+          }
+
+          // 4. 数字键 1..5: 快速场景 Cues, 6 / ` / Tab: 随机突变
+          if (!e.shiftKey && !e.altKey && !e.ctrlKey) {
+            if (e.key === '1') {
+              e.preventDefault();
+              this.loadCue([['M',0],['U',1],['Y',0]], 0, 1.0);
+              return;
+            } else if (e.key === '2') {
+              e.preventDefault();
+              this.loadCue([['I',1],['W',0],['V',2]], 1, 1.4);
+              return;
+            } else if (e.key === '3') {
+              e.preventDefault();
+              this.loadCue([['F',1],['C',1],['Q',2],['X',0]], 1, 1.6);
+              return;
+            } else if (e.key === '4') {
+              e.preventDefault();
+              this.loadCue([['A',0],['B',2],['S',0],['E',0]], 3, 2.0);
+              return;
+            } else if (e.key === '5') {
+              e.preventDefault();
+              this.loadCue([['D',1],['H',2],['K',1],['Z',0]], 2, 1.2);
+              return;
+            } else if (e.key === '6' || e.key === '`' || e.key === 'Tab') {
+              e.preventDefault();
+              this.randomMutation();
+              return;
+            } else if (e.key === '0') {
+              e.preventDefault();
+              this.setSpeed(1.0);
+              return;
+            }
+          }
+
+          // 5. A - Z 插件控制
+          if (this.layers[key] !== undefined) {
+            e.preventDefault();
+            if (e.ctrlKey) {
+              // Ctrl + Key: Flash Burst
+              this.flashLayer(key);
+            } else if (e.shiftKey) {
+              // Shift + Key: 循环切换该插件变体
+              const nextV = (this.layers[key].variantIdx + 1) % 4;
+              this.setPluginVariant(key, nextV);
+            } else {
+              // 单按字母键: 开关该插件
+              this.toggleLayer(key);
+            }
+            return;
+          }
+
+          // 6. 空格键: Master Blackout
+          if (e.code === 'Space') {
+            e.preventDefault();
+            this.toggleBlackout();
+            return;
+          }
+
+          // 7. Escape: 清除全部插件
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            if (this.shortcutModalEl && this.shortcutModalEl.classList.contains('open')) {
+              this.toggleShortcutModal(false);
+            } else {
+              this.clearAllLayers();
+            }
+            return;
+          }
+
+          // 8. 方向键控制
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.setSpeed(this.speed + (e.shiftKey ? 0.5 : 0.1));
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.setSpeed(this.speed - (e.shiftKey ? 0.5 : 0.1));
+          } else if (e.key === 'ArrowRight' || e.key === ']') {
+            e.preventDefault();
+            this.setGlobalVariant((this.globalVariant + 1) % 4);
+          } else if (e.key === 'ArrowLeft' || e.key === '[') {
+            e.preventDefault();
+            this.setGlobalVariant((this.globalVariant + 3) % 4);
+          }
+
+          // 9. Tap Tempo
+          if (e.key === 'Enter' || e.key === '\\') {
+            e.preventDefault();
+            this.tapTempo();
+          }
+
+          // 10. 全屏
+          if (e.key === 'F11' || (!e.ctrlKey && !e.altKey && (e.key === 'f' || e.key === 'F'))) {
+            // Note: 'F' is also Fan Lasers if pressed alone, so let's allow F11 or Fullscreen button
+          }
+        });
+      }
+
+      // ================= Program Monitor 实时渲染管线 =================
+      previewLoop(currentTime) {
+        requestAnimationFrame(this.previewLoop);
+
+        const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
+        this.lastTime = currentTime;
+
+        this.accumulatedTime += dt * this.speed;
+        const time = this.accumulatedTime;
+        const v = this.globalVariant;
+
+        const ctx = this.pctx;
+        const w = this.prevWidth;
+        const h = this.prevHeight;
+        const cx = w * 0.5;
+        const cy = h * 0.5;
+        const maxDim = Math.max(w, h);
+
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, w, h);
+
+        if (this.blackout) return;
+
+        // 动态执行当前激活的所有插件的渲染
+        for (let i = 0; i < this.pluginList.length; i++) {
+          const plug = this.pluginList[i];
+          const layerState = this.layers[plug.key];
+          if (!layerState || !layerState.active) continue;
+
+          const renderState = {
+            width: w,
+            height: h,
+            cx: cx,
+            cy: cy,
+            maxDim: maxDim,
+            time: time,
+            speed: this.speed,
+            intensity: 1.0,
+            globalVariant: v,
+            pluginVariant: layerState.variantIdx,
+            utils: this.utils
+          };
+
+          try {
+            plug.render(ctx, renderState, layerState.variantIdx);
+          } catch (err) {
+            // Suppress preview error
+          }
+        }
+      }
+    }
+
+    // 实例化主控制器并挂载全局
+    window.controller = new VJMasterController();
+  </script>
+</body>
+</html>
